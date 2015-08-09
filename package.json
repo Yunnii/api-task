@@ -1,0 +1,22 @@
+{
+  "name": "api-task",
+  "version": "1.0.0",
+  "description": "",
+  "main": "shri.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yunnii/api-task.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Yunnii/api-task/issues"
+  },
+  "homepage": "https://github.com/Yunnii/api-task",
+  "dependencies": {
+    "bluebird": "~2.9.34"
+  }
+}
