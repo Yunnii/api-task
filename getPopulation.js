@@ -1,13 +1,5 @@
 var populationIndex = function (countries, cities, populations) {
-    this.Cache = {
-        cities: {},
-        countries: {},
-        continents: {}
-    };
-
-    this.countries = countries;
-    this.cities = cities;
-    this.populations = populations;
+    this.update(countries, cities, populations);
 };
 
 populationIndex.prototype.update = function (countries, cities, populations) {
@@ -20,24 +12,40 @@ populationIndex.prototype.update = function (countries, cities, populations) {
     this.countries = countries;
     this.cities = cities;
     this.populations = populations;
+
+    this.preBuild();
 };
 
-/**
- * Численность населения городов
- *
- * @private
- * @param cities
- * @returns {*}
- * @private
- */
-populationIndex.prototype._getPopulationByCities = function (cities) {
-    return this.populations.reduce(function(count, population) {
-        if(cities.hasOwnProperty(population.name)) {
-            count += population.count;
+populationIndex.prototype.preBuild = function () {
+    this.Cache.continents = this.countries.reduce(function (continents, country) {
+        if (!continents[country.continent]) {
+            continents[country.continent] = {
+                countries: []
+            }
         }
 
-        return count;
-    }, 0);
+        continents[country.continent].countries.push(country.name);
+
+        return continents;
+    }, {});
+
+    this.Cache.countries = this.cities.reduce(function (countries, city) {
+        if (!countries[city.country]) {
+            countries[city.country] = {
+                cities: []
+            }
+        }
+
+        countries[city.country].cities.push(city.name);
+
+        return countries;
+    }, {});
+
+    this.Cache.cities = this.populations.reduce(function (cities, population) {
+        cities[population.name] = population.count;
+
+        return cities;
+    }, {});
 };
 
 /**
@@ -46,32 +54,8 @@ populationIndex.prototype._getPopulationByCities = function (cities) {
  * @param city
  * @returns {*}
  */
-populationIndex.prototype.getPopulationByCity = function(city) {
-    var query = {};
-    query[city] = city;
-
-    return this._getPopulationByCities(query);
-};
-
-/**
- * @private
- *
- * Численность населения списка стран
- *
- * @param countries
- * @returns {*}
- * @private
- */
-populationIndex.prototype._getPopulationByCountries = function(countries) {
-    var citiesInCountry = this.cities.reduce(function(res, city) {
-        if(countries.hasOwnProperty(city.country)) {
-            res[city.name] = city.name;
-        }
-
-        return res;
-    }, {});
-
-    return this._getPopulationByCities(citiesInCountry);
+populationIndex.prototype.getPopulationByCity = function (city) {
+    return this.Cache.cities[city];
 };
 
 /**
@@ -80,11 +64,17 @@ populationIndex.prototype._getPopulationByCountries = function(countries) {
  * @param country
  * @returns {*}
  */
-populationIndex.prototype.getPopulationByCountry = function(country) {
-    var query = {};
-    query[country] = country;
+populationIndex.prototype.getPopulationByCountry = function (country) {
+    if (!this.Cache.countries[country].count) {
+        this.Cache.countries[country].count = this.Cache.countries[country].cities
+            .reduce(function (count, city) {
+                count += this.getPopulationByCity(city);
 
-    return this._getPopulationByCountries(country);
+                return count;
+            }.bind(this), 0);
+    }
+
+    return this.Cache.countries[country].count;
 };
 
 /**
@@ -93,21 +83,16 @@ populationIndex.prototype.getPopulationByCountry = function(country) {
  * @param continent
  * @returns {*}
  */
-populationIndex.prototype.getPopulationByContinent = function(continent) {
+populationIndex.prototype.getPopulationByContinent = function (continent) {
 
-    if (!this.Cache.continents[continent]) {
-        var countriesInContinent = this.countries.reduce(function(res, country) {
-            if (country.continent === continent) {
-                res[country.name] = country.name;
-            }
+    if (!this.Cache.continents[continent].count) {
+        var countriesInContinent = this.Cache.continents[continent].countries;
 
-            return res;
-        }, {});
+        this.Cache.continents[continent].count = countriesInContinent.reduce(function(count, country) {
+            count += this.getPopulationByCountry(country);
 
-        this.Cache.continents[continent] = {
-            countries: countriesInContinent,
-            count: this._getPopulationByCountries(countriesInContinent)
-        };
+            return count;
+        }.bind(this), 0);
     }
 
     return this.Cache.continents[continent].count;
