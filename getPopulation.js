@@ -3,7 +3,7 @@ var populationIndex = function (countries, cities, populations) {
 };
 
 populationIndex.prototype.update = function (countries, cities, populations) {
-    this.Cache = {
+    this.cache = {
         cities: {},
         countries: {},
         continents: {}
@@ -17,31 +17,35 @@ populationIndex.prototype.update = function (countries, cities, populations) {
 };
 
 populationIndex.prototype.preBuild = function () {
-    this.Cache.continents = this.countries.reduce(function (continents, country) {
-        if (!continents[country.continent]) {
-            continents[country.continent] = {
+    this.cache.continents = this.countries.reduce(function (continents, country) {
+        var continent = country.continent;
+
+        if (!continents[continent]) {
+            continents[continent] = {
                 countries: []
             }
         }
 
-        continents[country.continent].countries.push(country.name);
+        continents[continent].countries.push(country.name);
 
         return continents;
     }, {});
 
-    this.Cache.countries = this.cities.reduce(function (countries, city) {
-        if (!countries[city.country]) {
-            countries[city.country] = {
+    this.cache.countries = this.cities.reduce(function (countries, city) {
+        var country = city.country;
+
+        if (!countries[country]) {
+            countries[country] = {
                 cities: []
             }
         }
 
-        countries[city.country].cities.push(city.name);
+        countries[country].cities.push(city.name);
 
         return countries;
     }, {});
 
-    this.Cache.cities = this.populations.reduce(function (cities, population) {
+    this.cache.cities = this.populations.reduce(function (cities, population) {
         cities[population.name] = population.count;
 
         return cities;
@@ -55,7 +59,7 @@ populationIndex.prototype.preBuild = function () {
  * @returns {*}
  */
 populationIndex.prototype.getPopulationByCity = function (city) {
-    return this.Cache.cities[city];
+    return this.cache.cities[city];
 };
 
 /**
@@ -65,8 +69,8 @@ populationIndex.prototype.getPopulationByCity = function (city) {
  * @returns {*}
  */
 populationIndex.prototype.getPopulationByCountry = function (country) {
-    if (!this.Cache.countries[country].count) {
-        this.Cache.countries[country].count = this.Cache.countries[country].cities
+    if (!this.cache.countries[country].count) {
+        this.cache.countries[country].count = this.cache.countries[country].cities
             .reduce(function (count, city) {
                 count += this.getPopulationByCity(city);
 
@@ -74,7 +78,7 @@ populationIndex.prototype.getPopulationByCountry = function (country) {
             }.bind(this), 0);
     }
 
-    return this.Cache.countries[country].count;
+    return this.cache.countries[country].count;
 };
 
 /**
@@ -85,17 +89,17 @@ populationIndex.prototype.getPopulationByCountry = function (country) {
  */
 populationIndex.prototype.getPopulationByContinent = function (continent) {
 
-    if (!this.Cache.continents[continent].count) {
-        var countriesInContinent = this.Cache.continents[continent].countries;
+    if (!this.cache.continents[continent].count) {
+        var countriesInContinent = this.cache.continents[continent].countries;
 
-        this.Cache.continents[continent].count = countriesInContinent.reduce(function(count, country) {
+        this.cache.continents[continent].count = countriesInContinent.reduce(function(count, country) {
             count += this.getPopulationByCountry(country);
 
             return count;
         }.bind(this), 0);
     }
 
-    return this.Cache.continents[continent].count;
+    return this.cache.continents[continent].count;
 };
 
 module.exports = populationIndex;

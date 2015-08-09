@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/Yunnii/api-task",
   "dependencies": {
-    "bluebird": "~2.9.34"
+    "bluebird": "~2.9.34",
+    "prompt": "~0.2.14"
   }
 }
